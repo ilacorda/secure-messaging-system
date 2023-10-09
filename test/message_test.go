@@ -32,7 +32,7 @@ func Test_NewMessage(t *testing.T) {
 }
 
 func TestMessageBuilder(t *testing.T) {
-	t.Run("happy path: create a new message using builder", func(t *testing.T) {
+	t.Run("happy path: create a new message using the builder", func(t *testing.T) {
 		senderID := fake.CharactersN(10)
 		receiverID := fake.CharactersN(10)
 		encryptedText := fake.Sentence()
@@ -102,7 +102,6 @@ func TestMessageConversion(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			// Convert to JSON
 			jsonData, err := tt.message.ToJSON()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ToJSON() error = %v, wantErr %v", err, tt.wantErr)
@@ -113,7 +112,6 @@ func TestMessageConversion(t *testing.T) {
 				return
 			}
 
-			// Convert from JSON
 			msgFromJSON, err := pkg.MessageFromJSON(jsonData)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("MessageFromJSON() error = %v, wantErr %v", err, tt.wantErr)

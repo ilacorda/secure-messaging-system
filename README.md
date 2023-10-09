@@ -3,7 +3,6 @@ This repository contains a secure messaging system implementation, designed to s
 The system adheres to secure coding practices and robust design principles, ensuring the security and integrity of your messages.
 
 ### Instructions for the task
-
 For this assignment, the goal of this task is to design and implement a secure messaging system. In this system, a sender will be able to send an encrypted message to a receiver, who can then decrypt the message.
 
 #### Requirements:
@@ -23,13 +22,13 @@ A GitHub repository, containing the following:
 
 ### Design Choices
 
-- **Simplified Directory Structure**: To make the application more accessible and easier to navigate, a rather flat directory structure has been adopted. We have been included the encryption and key exchange logic together with the `Message` struct and its related functions in the `pkg` directory. 
+- **Simplified Directory Structure**: To make the application more accessible and easier to navigate, a rather flat directory structure has been adopted. I have included the encryption and key exchange logic together with the `Message` struct and its related functions in the `pkg` directory. 
 The `cmd` directory contains the main entry point of the application. `test` contains the unit tests for the application.
 
-- **AES Encryption**: AES, a widely recognized symmetric encryption standard, is used for its efficiency and strong security guarantees. We implemented a validation for 16, 24, or 32 bytes long to match AES-128, AES-192, or AES-256 respectively. 
+- **AES Encryption**: AES, a widely recognized symmetric encryption standard, is used for its efficiency and strong security guarantees. I implemented a validation for 16, 24, or 32 bytes long to match AES-128, AES-192, or AES-256 respectively. 
 The implementation also uses CFB Mode, which operates by encrypting the current block and using parts of the output as feedback for the next block.
 
-- **Key Exchange**: We employed the Diffie-Hellman key exchange mechanism to securely exchange the encryption key between the sender and the receiver as offered by the `crypto/elliptic` package. Because of the time constraints and basic knowledge of such mechanism, we just showcased it in the `main.go` function
+- **Key Exchange**: I employed the Diffie-Hellman key exchange mechanism to securely exchange the encryption key between the sender and the receiver as offered by the `crypto/elliptic` package. Because of the time constraints and ver basic knowledge of such mechanism, I just showcased it in the `main.go` function
 
 - **JSON Payloads**: Messages are structured as JSON payloads, ensuring compatibility and easy integration with other systems. As per the specification, the message payload contains the following fields:
     - `sender_id`: The sender ID of the message.
@@ -37,9 +36,7 @@ The implementation also uses CFB Mode, which operates by encrypting the current 
     - `encrypted_text`: The encrypted textual message.
     - `timestamp`: The timestamp of the message.
 
-Protocolbuffers are preferable because of efficiency, fast serialisation and deserialisation (as well as built-in validations), but we chose JSON for its simplicity and ease of use and to align with the recommended time of completion for the task. 
-
-- **Basic Secure Coding Practices**: Proper input validation is implemented to prevent malicious inputs, and appropriate error handling is in place to handle unforeseen circumstances gracefully. In relation to the KeySize validation, we provide validation for the length of the key and wrapped errors in context
+Protocolbuffers would normall be the preferable choice because of efficiency, fast serialisation and deserialisation (as well as built-in validations), but I chose JSON for its simplicity and ease of use and to align with the recommended time of completion for the task. 
 
 ### Structure
 ```
@@ -48,7 +45,7 @@ Protocolbuffers are preferable because of efficiency, fast serialisation and des
 ├── pkg/
 │   ├── encryption.go            # AES-GCM encryption & decryption logic.
 │   ├── key_exchange.go          # Diffie-Hellman key exchange mechanism.
-│   └── message.go               # Message creation, validation & handling.
+│   └── message.go               # Message creation, validation & handling and basic builder.
 │
 ├── test/
 │   ├── encryption_test.go           # Tests for encryption functionalities.
@@ -77,9 +74,9 @@ Run the application:
 ### How to Run the Tests
 To run tests, from the root level, run the following command:
 
-`go test ./..`
+`go test ./...`
 
-Test flags can be added to the command above to generate coverage reports, run exclusively unit tests, etc. Considering that we only have unit tests, we did not include them
+Test flags can be added to the command above to generate coverage reports, run exclusively unit tests, etc. Considering that there are only have unit tests, I did not include them
 
 
 ### GitHub CI Action
@@ -87,14 +84,14 @@ A basic GitHub CI action is set up to ensure that the application builds success
 This CI action can be found in the `.github/workflows/build.yml` file.
 
 ### Future work and expected improvements
-- **Key Management**: The application showcases the Elliptic Curve Diffie-Hellman (ECDH) key exchange mechanism to dynamically generate and derive encryption keys for sessions. In future iterations, we might consider integrating with advanced key management systems like HashiCorp Vault for further security enhancements.
-- **Message Validation**: The application currently validates the message payload to ensure that it is a valid JSON object. However, we would like to improve this by using Protobuf to define and validate the message structure.
-- **Message Integrity**: The application currently does not provide any guarantees about the integrity of the message. We would like to improve this by adding a message authentication code (MAC) to the message payload.
-- **Data Persistence**: The application currently does not actively persist messages. We would like to improve this by adding a database to the application, so that messages can be stored and retrieved.
-- **Message Delivery**: The application currently does not provide any guarantees about the delivery of the message. We would like to improve this by adding a message queue to the application, so that messages can be queued and delivered.
-- **API implementation**: The application currently does not provide any API endpoints. We would like to improve this by adding API endpoints to the application, so that messages can be sent and received via API calls. Tracing and logging can also be added to the API endpoints. In particular, the usage of OpenTelemetry and OpenTracing can be explored.
-- **Test coverage**: Test coverage can be improved by adding more unit tests and integration tests. If persistence is implemented, we can also add repository tests to test the database layer.
-- Improve CICD pipeline: The CICD pipeline can be improved by adding more stages, such as linting and security scanning, coverage reports (e.g. codecov), etc.
+- **Key Management**: The application showcases the Elliptic Curve Diffie-Hellman (ECDH) key exchange mechanism to dynamically generating and deriving encryption keys for sessions. In future iterations, I might consider integrating with advanced key management systems like HashiCorp Vault for further security enhancements.
+- **Message Validation**: The application currently validates the message payload to ensure that it is a valid JSON object. However, I would like to improve this by using Protobuf to define and validate the message structure.
+- **Message Integrity**: The application currently does not provide any guarantees about the integrity of the message. I would like to improve this by adding a message authentication code (MAC) to the message payload.
+- **Data Persistence**: The application currently does not actively persist messages. I would like to improve this by adding a database to the application, so that messages can be stored and retrieved.
+- **Message Delivery**: The application currently does not provide any guarantees about the delivery of the message. I would like to improve this by adding a message queue to the application, so that messages can be queued and delivered.
+- **API implementation**: The application currently does not provide any API endpoints. I would like to improve this by adding API endpoints to the application, so that messages can be sent and received via API calls. Tracing and logging can also be added to the API endpoints. In particular, the usage of OpenTelemetry and OpenTracing can be explored.
+- **Test coverage**: Test coverage can be improved by adding more unit tests and integration tests. If persistence is implemented, I can also add repository tests to test the database layer.
+- **Improve CICD pipeline**: The CICD pipeline can be improved by adding more stages, such as linting and security scanning, coverage reports (e.g. codecov), etc.
 
 ### Task Duration
 The task was time-boxed and this currently version was reached in approximately 1.5 hours. While this could have been expanded, I wanted to align with the guidlines in the instructions.

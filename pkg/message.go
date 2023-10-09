@@ -54,9 +54,6 @@ func (b *MessageBuilder) Build() (*Message, error) {
 	if b.message.Timestamp.IsZero() {
 		b.message.Timestamp = time.Now()
 	}
-
-	// You can add additional validation checks here if needed.
-
 	return b.message, nil
 }
 

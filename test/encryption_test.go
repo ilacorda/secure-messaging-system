@@ -7,7 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const testMsg = "This is a test message"
+const (
+	testMsg       = "This is a test message"
+	encryptErrMsg = "Encrypt should return an error"
+)
 
 func Test_EncryptDecryptLogic(t *testing.T) {
 	testCases := []struct {
@@ -25,7 +28,7 @@ func Test_EncryptDecryptLogic(t *testing.T) {
 		{
 			name:       "Invalid key size",
 			plainText:  []byte(testMsg),
-			key:        []byte("InvalidKey"), // Invalid key size
+			key:        []byte("InvalidKey"),
 			shouldFail: true,
 		},
 		{
@@ -41,12 +44,11 @@ func Test_EncryptDecryptLogic(t *testing.T) {
 			ciphertext, err := pkg.Encrypt(tc.plainText, tc.key)
 
 			if tc.shouldFail {
-				assert.Error(t, err, "Encrypt should return an error")
+				assert.Error(t, err, encryptErrMsg)
 				assert.Nil(t, ciphertext, "Ciphertext should be nil")
 			} else {
-				assert.NoError(t, err, "Encrypt should not return an error")
+				assert.NoError(t, err, encryptErrMsg)
 
-				// Decrypt the ciphertext
 				decryptedText, err := pkg.Decrypt(ciphertext, tc.key)
 				assert.NoError(t, err, "Decrypt should not return an error")
 				assert.Equal(t, tc.plainText, decryptedText, "Decrypted text should match the original plaintext")
