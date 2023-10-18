@@ -95,3 +95,6 @@ This CI action can be found in the `.github/workflows/build.yml` file.
 
 ### Task Duration
 The task was time-boxed and this currently version was reached in approximately 1.5 hours. While this could have been expanded, I wanted to align with the guidlines in the instructions.
+
+### Subsequent PRs
+- Added structured logging with [zerolog](https://github.com/rs/zerolog) whose basic setup for Console logging is defined in `logger.go` and called in `main.go`
