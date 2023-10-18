@@ -13,12 +13,8 @@ on:
       - feature/*
 
 jobs:
-  build:
-    name: Build
+  setup:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-version: [1.21] # add more versions if required
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
@@ -26,7 +22,10 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version: 1.21.0
+
+      - name: Clear Old Go Installation
+        run: sudo rm -rf /opt/hostedtoolcache/go
 
       - name: Cache dependencies
         uses: actions/cache@v2
@@ -39,51 +38,30 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+  build:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
       - name: Build
         run: go build -v -o ./bin/ ./...
 
   lint:
-    needs: build
-    name: Lint
+    needs: setup
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-
-      - name: Setup Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.21.0
-
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.42
+
   test:
     needs: build
-    name: Test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
           node-version: 16
-
-      - name: Setup Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.21.0
-
-      - name: Cache dependencies
-        uses: actions/cache@v2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
 
       - name: Test
         run: go test -v -coverprofile=coverage.txt ./...
