@@ -3,28 +3,19 @@ package pkg
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"time"
-	"unicode/utf8"
-
 	"github.com/rs/zerolog/log"
+	pb "secure-messaging-system/proto"
+	"time"
 )
 
-type Message struct {
-	SenderID      string    `json:"sender_id"`
-	ReceiverID    string    `json:"receiver_id"`
-	Timestamp     time.Time `json:"timestamp"`
-	EncryptedText string    `json:"encrypted_text"`
-}
-
 type MessageBuilder struct {
-	message *Message
+	message *pb.Message
 }
 
 // NewMessageBuilder creates a new MessageBuilder instance.
 func NewMessageBuilder() *MessageBuilder {
 	return &MessageBuilder{
-		message: &Message{},
+		message: &pb.Message{},
 	}
 }
 
@@ -34,7 +25,7 @@ func (b *MessageBuilder) WithSenderID(senderID string) *MessageBuilder {
 		log.Warn().Msg("Provided empty SenderID")
 		return b
 	}
-	b.message.SenderID = senderID
+	b.message.SenderId = senderID
 	return b
 }
 
@@ -44,7 +35,12 @@ func (b *MessageBuilder) WithReceiverID(receiverID string) *MessageBuilder {
 		log.Warn().Msg("Provided empty ReceiverID")
 		return b
 	}
-	b.message.ReceiverID = receiverID
+	b.message.ReceiverId = receiverID
+	return b
+}
+
+func (b *MessageBuilder) WithTimestamp(timestamp time.Time) *MessageBuilder {
+	b.message.Timestamp = timestamp.Unix()
 	return b
 }
 
@@ -58,56 +54,44 @@ func (b *MessageBuilder) WithEncryptedText(encryptedText string) *MessageBuilder
 	return b
 }
 
-// WithTimestamp sets the Timestamp of the message. If not set, it defaults to the current time when building.
-func (b *MessageBuilder) WithTimestamp(timestamp time.Time) *MessageBuilder {
-	b.message.Timestamp = timestamp
-	return b
-}
-
 // Build finalizes the building process and returns the constructed Message.
-func (b *MessageBuilder) Build() (*Message, error) {
-	if b.message.SenderID == "" || b.message.ReceiverID == "" || b.message.EncryptedText == "" {
+func (b *MessageBuilder) Build() (*pb.Message, error) {
+	if b.message.SenderId == "" || b.message.ReceiverId == "" || b.message.EncryptedText == "" {
 		return nil, errors.New("message is incomplete")
 	}
 
-	if b.message.Timestamp.IsZero() {
-		b.message.Timestamp = time.Now()
+	if b.message.Timestamp == 0 {
+		b.message.Timestamp = time.Now().Unix()
 	}
 
 	return b.message, nil
 }
 
-func NewMessage(senderID, receiverID, encryptedText string) *Message {
+func NewMessage(senderID, receiverID, encryptedText string) *pb.Message {
 	if senderID == "" || receiverID == "" || encryptedText == "" {
 		log.Error().Msg("Cannot create a new message with empty fields")
 		return nil
 	}
 
-	return &Message{
-		SenderID:      senderID,
-		ReceiverID:    receiverID,
-		Timestamp:     time.Now(),
+	return &pb.Message{
+		SenderId:      senderID,
+		ReceiverId:    receiverID,
+		Timestamp:     time.Now().Unix(),
 		EncryptedText: encryptedText,
 	}
 }
 
-func (m *Message) ToJSON() ([]byte, error) {
-	if m == nil {
-		log.Error().Msg("Attempted to convert a nil Message to JSON")
-		return nil, fmt.Errorf("nil Message reference")
-	}
-	if !utf8.ValidString(m.EncryptedText) {
-		log.Error().Msg("EncryptedText contains invalid UTF-8 sequence")
-		return nil, fmt.Errorf("invalid UTF-8 sequence in EncryptedText")
-	}
-	return json.Marshal(m)
+// ToJSON converts a pb.Message to a JSON byte array.
+func ToJSON(msg *pb.Message) ([]byte, error) {
+	return json.Marshal(msg)
 }
 
-func MessageFromJSON(data []byte) (*Message, error) {
-	var msg Message
+// MessageFromJSON converts a JSON byte array to a pb.Message.
+func MessageFromJSON(data []byte) (*pb.Message, error) {
+	var msg pb.Message
 	err := json.Unmarshal(data, &msg)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to unmarshal JSON data to Message")
+		return nil, err
 	}
-	return &msg, err
+	return &msg, nil
 }

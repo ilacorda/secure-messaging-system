@@ -6,6 +6,7 @@ require (
 	github.com/icrowley/fake v0.0.0-20221112152111-d7b7e2276db2
 	github.com/rs/zerolog v1.31.0
 	github.com/stretchr/testify v1.7.5
+	google.golang.org/protobuf v1.31.0
 )
 
 require (
