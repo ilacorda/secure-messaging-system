@@ -98,3 +98,4 @@ The task was time-boxed and this currently version was reached in approximately 
 
 ### Subsequent PRs
 - Added structured logging with [zerolog](https://github.com/rs/zerolog) whose basic setup for Console logging is defined in `logger.go` and called in `main.go`
+- ADD linter to Github actions and include Makefile with targets

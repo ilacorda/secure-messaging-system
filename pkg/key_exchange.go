@@ -1,42 +1,39 @@
 package pkg
 
 import (
+	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
 	"errors"
-	"github.com/rs/zerolog/log"
 )
 
 // GenerateECDHKeys generates a pair of public and private keys for ECDH.
 func GenerateECDHKeys() (publicKey, privateKey []byte, err error) {
 	curve := elliptic.P256() // Using P-256 curve
-	log.Info().Str("curve", "P-256").Msg("Generating ECDH keys using curve")
 
-	private, x, y, err := elliptic.GenerateKey(curve, rand.Reader)
+	// Use crypto/ecdsa to generate the keys
+	priv, err := ecdsa.GenerateKey(curve, rand.Reader)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to generate ECDH keys")
 		return nil, nil, err
 	}
 
-	public := elliptic.MarshalCompressed(curve, x, y)
-	log.Debug().Hex("publicKey", public).Msg("Generated public key for ECDH")
-	return public, private, nil
+	public := elliptic.MarshalCompressed(curve, priv.PublicKey.X, priv.PublicKey.Y)
+	return public, priv.D.Bytes(), nil
 }
 
 // ComputeECDHSecret computes the shared secret using own private key and peer's public key.
 func ComputeECDHSecret(privKey, pubKey []byte) ([]byte, error) {
 	curve := elliptic.P256() // Using P-256 curve
-	log.Info().Str("curve", "P-256").Msg("Computing ECDH secret using curve")
-
 	x, y := elliptic.UnmarshalCompressed(curve, pubKey)
-	if !curve.IsOnCurve(x, y) {
-		log.Warn().Str("point", "elliptic curve").Msg("Invalid point on curve detected")
-		return nil, errors.New("invalid elliptic curve point")
+
+	if x == nil || y == nil {
+		return nil, errors.New("failed to unmarshal public key")
 	}
 
-	// Compute the secret using elliptic curve scalar multiplication
-	x, _ = curve.ScalarMult(x, y, privKey)
-	sharedSecret := x.Bytes()
-	log.Debug().Msg("Successfully computed ECDH secret")
-	return sharedSecret, nil
+	// Scalar multiplication to compute shared secret
+	secretX, _ := curve.ScalarMult(x, y, privKey)
+	if secretX == nil {
+		return nil, errors.New("failed to compute shared secret")
+	}
+	return secretX.Bytes(), nil
 }
