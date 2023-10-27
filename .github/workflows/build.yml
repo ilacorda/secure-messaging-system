@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: [1.21] # add more versions if required
+        go-version: [1.21.0]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
@@ -27,6 +27,12 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go-version }}
+
+      - name: Export Go Environment
+        run: |
+          echo "GOROOT=$GOROOT" >> $GITHUB_ENV
+          echo "GOPATH=$GOPATH" >> $GITHUB_ENV
+          echo "PATH=$GOROOT/bin:$GOPATH/bin:$PATH" >> $GITHUB_ENV
 
       - name: Cache dependencies
         uses: actions/cache@v2
@@ -41,6 +47,27 @@ jobs:
 
       - name: Build
         run: go build -v -o ./bin/ ./...
+
+  lint:
+    needs: build
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.21.0
+
+      - name: Clear Go Cache
+        run: go clean -modcache -cache
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.54
 
   test:
     needs: build
