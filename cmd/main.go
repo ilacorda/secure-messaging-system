@@ -2,41 +2,43 @@ package main
 
 import (
 	"crypto/sha256"
-	"fmt"
+	"github.com/rs/zerolog/log"
 	"secure-messaging-system/pkg"
 )
 
 func main() {
+	// Initialize logger
+	pkg.Setup()
+
 	// Generating ECDH Key Pairs for sender and receiver
 	senderPub, senderPriv, err := pkg.GenerateECDHKeys()
 	if err != nil {
-		fmt.Println("Error generating sender's ECDH keys:", err)
+		log.Error().Err(err).Msg("Error generating sender's ECDH keys")
 		return
 	}
 
 	receiverPub, receiverPriv, err := pkg.GenerateECDHKeys()
 	if err != nil {
-		fmt.Println("Error generating receiver's ECDH keys:", err)
+		log.Error().Err(err).Msg("Error generating receiver's ECDH keys")
 		return
 	}
 
 	// Computing the Shared Secret for both sender and receiver
 	senderSharedSecret, err := pkg.ComputeECDHSecret(senderPriv, receiverPub)
 	if err != nil {
-		fmt.Println("Error computing sender's shared secret:", err)
+		log.Error().Err(err).Msg("Error computing sender's shared secret")
 		return
 	}
 
 	receiverSharedSecret, err := pkg.ComputeECDHSecret(receiverPriv, senderPub)
 	if err != nil {
-		fmt.Println("Error computing receiver's shared secret:", err)
+		log.Error().Err(err).Msg("Error computing receiver's shared secret")
 		return
 	}
 
 	// Ensure both computed secrets are identical
-	// This step might be omitted if confident that the ECDH implementation is correct
 	if string(senderSharedSecret) != string(receiverSharedSecret) {
-		fmt.Println("Error: Computed shared secrets are not identical!")
+		log.Error().Msg("Computed shared secrets are not identical")
 		return
 	}
 
@@ -46,18 +48,18 @@ func main() {
 	plainText := "This is a test message"
 	encryptedText, err := pkg.Encrypt([]byte(plainText), key[:])
 	if err != nil {
-		fmt.Println("Error encrypting message:", err)
+		log.Error().Err(err).Msg("Error encrypting message")
 		return
 	}
 
-	fmt.Println("Encrypted Text:", string(encryptedText))
+	log.Info().Str("Encrypted Text", string(encryptedText)).Msg("Message encrypted successfully")
 
 	// Use receiver's derived shared secret for decryption
 	decryptedText, err := pkg.Decrypt(encryptedText, key[:])
 	if err != nil {
-		fmt.Println("Error decrypting message:", err)
+		log.Error().Err(err).Msg("Error decrypting message")
 		return
 	}
 
-	fmt.Println("Decrypted Text:", string(decryptedText))
+	log.Info().Str("Decrypted Text", string(decryptedText)).Msg("Message decrypted successfully")
 }
