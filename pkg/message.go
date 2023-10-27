@@ -6,6 +6,7 @@ import (
 	"github.com/rs/zerolog/log"
 	pb "secure-messaging-system/proto"
 	"time"
+	"unicode/utf8"
 )
 
 type MessageBuilder struct {
@@ -81,17 +82,27 @@ func NewMessage(senderID, receiverID, encryptedText string) *pb.Message {
 	}
 }
 
-// ToJSON converts a pb.Message to a JSON byte array.
+// ToJSON converts a message to its JSON representation.
 func ToJSON(msg *pb.Message) ([]byte, error) {
-	return json.Marshal(msg)
-}
-
-// MessageFromJSON converts a JSON byte array to a pb.Message.
-func MessageFromJSON(data []byte) (*pb.Message, error) {
-	var msg pb.Message
-	err := json.Unmarshal(data, &msg)
+	if msg == nil {
+		return nil, errors.New("nil message provided")
+	}
+	if !utf8.ValidString(msg.EncryptedText) {
+		return nil, errors.New("invalid UTF-8 sequence in EncryptedText")
+	}
+	jsonData, err := json.Marshal(msg)
 	if err != nil {
 		return nil, err
 	}
-	return &msg, nil
+	return jsonData, nil
+}
+
+// MessageFromJSON converts a JSON representation to a message.
+func MessageFromJSON(data []byte) (*pb.Message, error) {
+	msg := &pb.Message{}
+	err := json.Unmarshal(data, msg)
+	if err != nil {
+		return nil, err
+	}
+	return msg, nil
 }
