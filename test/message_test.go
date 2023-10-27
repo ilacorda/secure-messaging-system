@@ -1,12 +1,11 @@
 package test
 
 import (
-	"secure-messaging-system/pkg"
-	"testing"
-	"time"
-
 	"github.com/icrowley/fake"
 	"github.com/stretchr/testify/assert"
+	"secure-messaging-system/pkg"
+	pb "secure-messaging-system/proto"
+	"testing"
 )
 
 const (
@@ -23,8 +22,8 @@ func Test_NewMessage(t *testing.T) {
 
 		message := pkg.NewMessage(senderID, receiverID, encryptedText)
 
-		assert.Equal(t, senderID, message.SenderID, senderIDMismatchErr)
-		assert.Equal(t, receiverID, message.ReceiverID, receiverIDMismatchErr)
+		assert.Equal(t, senderID, message.SenderId, senderIDMismatchErr)
+		assert.Equal(t, receiverID, message.ReceiverId, receiverIDMismatchErr)
 		assert.Equal(t, encryptedText, message.EncryptedText, encryptedTextMismatchErr)
 
 	})
@@ -45,12 +44,12 @@ func TestMessageBuilder(t *testing.T) {
 
 		assert.NoError(t, err, "Error building the message")
 
-		assert.Equal(t, senderID, message.SenderID, senderIDMismatchErr)
-		assert.Equal(t, receiverID, message.ReceiverID, receiverIDMismatchErr)
+		assert.Equal(t, senderID, message.SenderId, senderIDMismatchErr)
+		assert.Equal(t, receiverID, message.ReceiverId, receiverIDMismatchErr)
 		assert.Equal(t, encryptedText, message.EncryptedText, encryptedTextMismatchErr)
 
 		// Make sure that the timestamp was set
-		assert.False(t, message.Timestamp.IsZero(), "Timestamp was not set")
+		assert.NotEqual(t, int64(0), message.Timestamp, "Timestamp was not set")
 	})
 }
 
@@ -59,25 +58,25 @@ func TestMessageConversion(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		message *pkg.Message
+		message *pb.Message
 		wantErr bool
 	}{
 		{
 			name: "happy path: conversion to JSON and from JSON",
-			message: &pkg.Message{
-				SenderID:      fake.CharactersN(10),
-				ReceiverID:    fake.CharactersN(10),
-				Timestamp:     time.Now(),
+			message: &pb.Message{
+				SenderId:      fake.CharactersN(10),
+				ReceiverId:    fake.CharactersN(10),
+				Timestamp:     int64(0),
 				EncryptedText: fake.Paragraph(),
 			},
 			wantErr: false,
 		},
 		{
 			name: "error path: invalid UTF-8 sequence",
-			message: &pkg.Message{
-				SenderID:      fake.CharactersN(10),
-				ReceiverID:    fake.CharactersN(10),
-				Timestamp:     time.Now(),
+			message: &pb.Message{
+				SenderId:      fake.CharactersN(10),
+				ReceiverId:    fake.CharactersN(10),
+				Timestamp:     int64(0),
 				EncryptedText: string([]byte{0x80, 0x81, 0x82, 0x83}),
 			},
 			wantErr: true,
@@ -89,9 +88,9 @@ func TestMessageConversion(t *testing.T) {
 		},
 		{
 			name: "incomplete Message",
-			message: &pkg.Message{
-				SenderID:  fake.CharactersN(10),
-				Timestamp: time.Now(),
+			message: &pb.Message{
+				SenderId:  fake.CharactersN(10),
+				Timestamp: int64(0),
 			},
 			wantErr: false,
 		},
@@ -102,7 +101,7 @@ func TestMessageConversion(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			jsonData, err := tt.message.ToJSON()
+			jsonData, err := pkg.ToJSON(tt.message)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ToJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -125,10 +124,13 @@ func TestMessageConversion(t *testing.T) {
 	}
 }
 
-// Helper function to compare two messages
-func messagesAreEquivalent(msg1, msg2 *pkg.Message) bool {
-	return msg1.SenderID == msg2.SenderID &&
-		msg1.ReceiverID == msg2.ReceiverID &&
+// Helper function
+
+// messagesAreEquivalent compares two pb.Message objects and determines if they are equivalent.
+func messagesAreEquivalent(msg1, msg2 *pb.Message) bool {
+	// Compare individual fields of the messages.
+	return msg1.SenderId == msg2.SenderId &&
+		msg1.ReceiverId == msg2.ReceiverId &&
 		msg1.EncryptedText == msg2.EncryptedText &&
-		msg1.Timestamp.Unix() == msg2.Timestamp.Unix()
+		msg1.Timestamp == msg2.Timestamp
 }

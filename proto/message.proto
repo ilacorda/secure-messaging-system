@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package pkg;
+
+option go_package = "secure-messaging-system/pkg";
+
+message Message {
+  string sender_id = 1;
+  string receiver_id = 2;
+  int64 timestamp = 3;
+  string encrypted_text = 4;
+}
