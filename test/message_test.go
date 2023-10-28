@@ -1,11 +1,15 @@
 package test
 
 import (
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/icrowley/fake"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"secure-messaging-system/pkg"
 	pb "secure-messaging-system/proto"
 	"testing"
+	"time"
 )
 
 const (
@@ -19,8 +23,9 @@ func Test_NewMessage(t *testing.T) {
 		senderID := fake.CharactersN(10)
 		receiverID := fake.CharactersN(10)
 		encryptedText := fake.Sentence()
+		timestamp := time.Now()
 
-		message := pkg.NewMessage(senderID, receiverID, encryptedText)
+		message := pkg.NewMessage(senderID, receiverID, encryptedText, &timestamp)
 
 		assert.Equal(t, senderID, message.SenderId, senderIDMismatchErr)
 		assert.Equal(t, receiverID, message.ReceiverId, receiverIDMismatchErr)
@@ -35,21 +40,22 @@ func TestMessageBuilder(t *testing.T) {
 		senderID := fake.CharactersN(10)
 		receiverID := fake.CharactersN(10)
 		encryptedText := fake.Sentence()
+		timestamp := time.Now()
 
 		message, err := pkg.NewMessageBuilder().
 			WithSenderID(senderID).
 			WithReceiverID(receiverID).
 			WithEncryptedText(encryptedText).
+			WithTimestamp(timestamp).
 			Build()
 
 		assert.NoError(t, err, "Error building the message")
 
-		assert.Equal(t, senderID, message.SenderId, senderIDMismatchErr)
-		assert.Equal(t, receiverID, message.ReceiverId, receiverIDMismatchErr)
-		assert.Equal(t, encryptedText, message.EncryptedText, encryptedTextMismatchErr)
+		assert.Equal(t, senderID, message.SenderId, "Mismatched Sender ID")
+		assert.Equal(t, receiverID, message.ReceiverId, "Mismatched Receiver ID")
+		assert.Equal(t, encryptedText, message.EncryptedText, "Mismatched Encrypted Text")
 
-		// Make sure that the timestamp was set
-		assert.NotEqual(t, int64(0), message.Timestamp, "Timestamp was not set")
+		assert.Equal(t, timestamppb.New(timestamp), message.Timestamp, "Timestamp mismatch")
 	})
 }
 
@@ -66,7 +72,7 @@ func TestMessageConversion(t *testing.T) {
 			message: &pb.Message{
 				SenderId:      fake.CharactersN(10),
 				ReceiverId:    fake.CharactersN(10),
-				Timestamp:     int64(0),
+				Timestamp:     timestamppb.New(time.Now()),
 				EncryptedText: fake.Paragraph(),
 			},
 			wantErr: false,
@@ -76,7 +82,7 @@ func TestMessageConversion(t *testing.T) {
 			message: &pb.Message{
 				SenderId:      fake.CharactersN(10),
 				ReceiverId:    fake.CharactersN(10),
-				Timestamp:     int64(0),
+				Timestamp:     timestamppb.New(time.Now()),
 				EncryptedText: string([]byte{0x80, 0x81, 0x82, 0x83}),
 			},
 			wantErr: true,
@@ -90,7 +96,7 @@ func TestMessageConversion(t *testing.T) {
 			name: "incomplete Message",
 			message: &pb.Message{
 				SenderId:  fake.CharactersN(10),
-				Timestamp: int64(0),
+				Timestamp: timestamppb.New(time.Now()),
 			},
 			wantErr: false,
 		},
@@ -111,26 +117,20 @@ func TestMessageConversion(t *testing.T) {
 				return
 			}
 
-			msgFromJSON, err := pkg.MessageFromJSON(jsonData)
+			msgFromJSON, err := pkg.FromJSON(jsonData)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("MessageFromJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
-			if !tt.wantErr {
-				assert.True(t, messagesAreEquivalent(tt.message, msgFromJSON))
+			diff := cmp.Diff(
+				tt.message,
+				msgFromJSON,
+				cmpopts.IgnoreUnexported(pb.Message{}, timestamppb.Timestamp{}),
+			)
+			if diff != "" {
+				t.Errorf("Mismatch (-Original +FromJSON):\n%s", diff)
 			}
 		})
 	}
-}
-
-// Helper function
-
-// messagesAreEquivalent compares two pb.Message objects and determines if they are equivalent.
-func messagesAreEquivalent(msg1, msg2 *pb.Message) bool {
-	// Compare individual fields of the messages.
-	return msg1.SenderId == msg2.SenderId &&
-		msg1.ReceiverId == msg2.ReceiverId &&
-		msg1.EncryptedText == msg2.EncryptedText &&
-		msg1.Timestamp == msg2.Timestamp
 }

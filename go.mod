@@ -3,6 +3,7 @@ module secure-messaging-system
 go 1.21
 
 require (
+	github.com/google/go-cmp v0.6.0
 	github.com/icrowley/fake v0.0.0-20221112152111-d7b7e2276db2
 	github.com/rs/zerolog v1.31.0
 	github.com/stretchr/testify v1.7.5
